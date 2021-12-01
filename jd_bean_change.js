@@ -208,14 +208,14 @@ if ($.isNode()) {
 			TempBaipiao = "";
 			strGuoqi="";
 			console.log(`******开始查询【京东账号${$.index}】${$.nickName || $.UserName}*********`);
-            //读取需要过滤的用户列表
-            let notifySkipList_w = process.env.NOTIFY_SKIP_LIST_WINGSER ? process.env.NOTIFY_SKIP_LIST_WINGSER.split('&') : [];
-            tempNickIndex = notifySkipList_w.findIndex((item) => item === $.nickName);
-            tempNameIndex = notifySkipList_w.findIndex((item) => item === $.UserName);
+      //读取需要过滤的用户列表
+      let notifySkipList_w = process.env.NOTIFY_SKIP_LIST_WINGSER ? process.env.NOTIFY_SKIP_LIST_WINGSER.split('&') : [];
+      tempNickIndex = notifySkipList_w.findIndex((item) => item === $.nickName);
+      tempNameIndex = notifySkipList_w.findIndex((item) => item === $.UserName);
 
 			// 该账号自己看京豆，不给消息。
-            if (tempNickIndex!=-1 || tempNameIndex!=-1) {
-                continue;
+      if (tempNickIndex!=-1 || tempNameIndex!=-1) {
+          // continue; // 资产通知不做屏蔽
 			}
 
 			await TotalBean();
