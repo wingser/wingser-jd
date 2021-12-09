@@ -232,7 +232,7 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By wi
             }
         }
 
-		if (text.indexOf("cookie已失效") != -1 || text.indexOf("cookie过期") != -1  || desp.indexOf("重新登录获取") != -1 || text == "Ninja 运行通知") {
+		if (text.indexOf("cookie已失效") != -1 || text.indexOf("cookie过期") != -1  || text.indexOf("CK检测") != -1  || desp.indexOf("重新登录获取") != -1 || text == "Ninja 运行通知") {
 
             if (Notify_CKTask) {
                 console.log("触发CK脚本，开始执行....");
@@ -240,7 +240,9 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By wi
                 await exec(Notify_CKTask, function (error, stdout, stderr) {
                     console.log(error, stdout, stderr)
                 });
-                return;// wingser cookie已经失效，不通知消息。
+				if (text.indexOf("CK检测") == -1) {
+					return;// wingser cookie已经失效，直接换新的CK，如果是CK检测发现的，继续通知到微信上。
+				}
             }
             if (Notify_NoCKFalse == "true" && text != "Ninja 运行通知") {
                 return;
