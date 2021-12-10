@@ -265,17 +265,6 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By wi
 			return;
 		}
 
-		// 用户通知黑名单 不看通知的人 屏蔽通知 wingser
-		if (text.indexOf("京东资产变动") == -1) {
-			//不是资产通知，就过滤，如果是资产通知。通知所有用户
-			const notifySkipWingserList = process.env.NOTIFY_SKIP_LIST_WINGSER ? process.env.NOTIFY_SKIP_LIST_WINGSER.split('&') : [];
-			for (let i = 0; i < notifySkipWingserList.length; i++) {
-				if($.UserName==notifySkipWingserList[i] || $.nickName==notifySkipWingserList[i]){
-					return;
-				}
-			}
-        }
-
         if (text.indexOf("已可领取") != -1) {
             if (text.indexOf("农场") != -1) {
                 strTitle = "东东农场领取";
@@ -1265,6 +1254,16 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By wi
 
     }
 
+    // 用户通知黑名单 不看通知的人 屏蔽通知 wingser
+    if (text.indexOf("京东资产变动") == -1) {
+        //不是资产通知，就过滤，如果是资产通知。通知所有用户
+        const notifySkipWingserList = process.env.NOTIFY_SKIP_LIST_WINGSER ? process.env.NOTIFY_SKIP_LIST_WINGSER.split('&') : [];
+        for (let i = 0; i < notifySkipWingserList.length; i++) {
+            if($.UserName==notifySkipWingserList[i] || $.nickName==notifySkipWingserList[i]){
+                return;
+            }
+        }
+    }
     //由于上述两种微信通知需点击进去才能查看到详情，故text(标题内容)携带了账号序号以及昵称信息，方便不点击也可知道是哪个京东哪个活动
     text = text.match(/.*?(?=\s?-)/g) ? text.match(/.*?(?=\s?-)/g)[0] : text;
     await Promise.all([
