@@ -281,9 +281,14 @@ function pigPetLogin() {
                 }
                 if (data.resultData.resultData.wished) {
                   if (data.resultData.resultData.wishAward) {
-                    allMessage += `京东账号${$.index} ${$.nickName || $.UserName}\n${data.resultData.resultData.wishAward.name}已可兑换${$.index !== cookiesArr.length ? '\n\n' : ''}`
-                    console.log(`【京东账号${$.index}】${$.nickName || $.UserName} ${data.resultData.resultData.wishAward.name}已可兑换，请及时去京东金融APP领取`)
-                    $.finish = true
+
+                    //用户没配置在通知黑名单里面，就发送通知
+                    const strSkipList = process.env.NOTIFY_SKIP_LIST_WINGSER;
+                    if (!strSkipList.includes($.nickName) && !strSkipList.includes($.UserName)) {
+                      allMessage += `京东账号${$.index} ${$.nickName || $.UserName}\n${data.resultData.resultData.wishAward.name}已可兑换${$.index !== cookiesArr.length ? '\n\n' : ''}`
+                      console.log(`【京东账号${$.index}】${$.nickName || $.UserName} ${data.resultData.resultData.wishAward.name}已可兑换，请及时去京东金融APP领取`)
+                      $.finish = true
+                    }
                   }
                 }
                 console.log(`\n【京东账号${$.index}】${$.nickName || $.UserName} 的邀请码为${data.resultData.resultData.user.shareId}\n`)
