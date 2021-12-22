@@ -17,7 +17,7 @@
 [Script]
 cron "10 * * * *" script-path=jd_dreamFactory.js,tag=京喜工厂
 
-===============Surge=================
+===============Surge================= 
 京喜工厂 = type=cron,cronexp="10 * * * *",wake-system=1,timeout=3600,script-path=jd_dreamFactory.js
 
 ============小火箭=========
@@ -667,10 +667,13 @@ function userInfo() {
                 } else {
                   console.log(`\n\n预计最快还需 【${((production.needElectric - production.investedElectric) / (2 * 60 * 60 * 24)).toFixed(2)}天】生产完毕\n\n`)
                 }
-                if (production.status === 3 && $.index<8) {
-                  $.log(`\n\n商品生产已失效`)
-                  $.msg($.name, '', `【京东账号${$.index}】${$.nickName}\n【生产商品】${$.productName}\n【超时未完成】已失效，请选择新商品进行制造`)
-                  if ($.isNode() && (`${notifyLevel}` === '3' || `${notifyLevel}` === '2')) allMessage += `【京东账号${$.index}】${$.nickName}\n【生产商品】${$.productName}\n【超时未完成】已失效，请选择新商品进行制造${$.index !== cookiesArr.length ? '\n\n' : ''}`;
+                if (production.status === 3) {
+                  const notifySkipListName = process.env.NOTIFY_SKIP_LIST_WINGSER;
+                  if(!notifySkipListName.includes($.UserName)){
+                    $.log(`\n\n商品生产已失效 wingser : ${$.UserName}`)
+                    $.msg($.name, '', `【京东账号${$.index}】${$.nickName}\n【生产商品】${$.productName}\n【超时未完成】已失效，请选择新商品进行制造`)
+                    if ($.isNode() && (`${notifyLevel}` === '3' || `${notifyLevel}` === '2')) allMessage += `【京东账号${$.index}】${$.nickName}\n【生产商品】${$.productName}\n【超时未完成】已失效，请选择新商品进行制造${$.index !== cookiesArr.length ? '\n\n' : ''}`;
+                  }
                 }
               } else {
                 $.unActive = false;//标记是否开启了京喜活动或者选购了商品进行生产
