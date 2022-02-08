@@ -58,6 +58,7 @@ let DisableCash = "false";
 let llShowMonth = false;
 let Today = new Date();
 let strAllNotify="";
+let strSubNotify="";
 let llPetError=false;
 let strGuoqi="";
 let RemainMessage = '\n';
@@ -69,6 +70,7 @@ RemainMessage += '【东东萌宠】京东->我的->东东萌宠,完成是京东
 RemainMessage += '【领现金】京东->我的->东东萌宠->领现金(微信提现+京东红包)\n';
 RemainMessage += '【东东农场】京东->我的->东东农场,完成是京东红包,可以用于京东app的任意商品\n';
 RemainMessage += '【京喜工厂】京喜->我的->京喜工厂,完成是商品红包,用于购买指定商品(不兑换会过期)\n';
+RemainMessage += '【京东金融】京东金融app->我的->养猪猪,完成是白条支付券,支付方式选白条支付时立减.\n';
 RemainMessage += '【其他】京喜红包只能在京喜使用,其他同理';
 
 let WP_APP_TOKEN_ONE = "";
@@ -79,21 +81,27 @@ if ($.isNode() && process.env.WP_APP_TOKEN_ONE) {
 
 let doExJxBeans ="false";
 let time = new Date().getHours();
-if ($.isNode() && process.env.BEANCHANGE_ExJxBeans=="true") {
-	if (time >= 17){ 
-		console.log(`检测到设定了临期京豆转换喜豆...`);
-		doExJxBeans = process.env.BEANCHANGE_ExJxBeans;
-	} else{
-		console.log(`检测到设定了临期京豆转换喜豆,但时间未到17点后，暂不执行转换...`);
+if ($.isNode()) {
+	if(process.env.BEANCHANGE_ExJxBeans=="true"){
+		if (time >= 17){ 
+			console.log(`检测到设定了临期京豆转换喜豆...`);
+			doExJxBeans = process.env.BEANCHANGE_ExJxBeans;
+		} else{
+			console.log(`检测到设定了临期京豆转换喜豆,但时间未到17点后，暂不执行转换...`);
+		}
 	}
 }
-
-/*
+let doCheckJxBeans ="false";
+if ($.isNode()) {
+	if(process.env.BEANCHANGE_CheckJxBeans=="true"){
+		console.log(`检测到设定了查询喜豆信息...`);
+		doCheckJxBeans = process.env.BEANCHANGE_ExJxBeans;	
+	}
+}
 if ($.isNode() && process.env.BEANCHANGE_PERSENT) {
 	intPerSent = parseInt(process.env.BEANCHANGE_PERSENT);
 	console.log(`检测到设定了分段通知:` + intPerSent);
 }
-*/
 
 if ($.isNode() && process.env.BEANCHANGE_USERGP2) {
 	MessageUserGp2 = process.env.BEANCHANGE_USERGP2 ? process.env.BEANCHANGE_USERGP2.split('&') : [];
@@ -123,18 +131,20 @@ if ($.isNode() && process.env.BEANCHANGE_DISABLECASH) {
 	//EnableMonth = process.env.BEANCHANGE_ENABLEMONTH;
 //}
 
-if ($.isNode() && process.env.BEANCHANGE_ALLNOTIFY) {
-	
-	var strTempNotify=process.env.BEANCHANGE_ALLNOTIFY ? process.env.BEANCHANGE_ALLNOTIFY.split('&') : [];
-	if (strTempNotify.length > 0) {
-		for (var TempNotifyl in strTempNotify) {					
-			strAllNotify+=strTempNotify[TempNotifyl]+'\n';
-		}
-	}
+if ($.isNode() && process.env.BEANCHANGE_ALLNOTIFY) {	
+	strAllNotify=process.env.BEANCHANGE_ALLNOTIFY;
 	console.log(`检测到设定了公告,将在推送信息中置顶显示...`);
 	strAllNotify = `【✨✨✨✨公告✨✨✨✨】\n`+strAllNotify;
-	console.log(strAllNotify);
+	console.log(strAllNotify+"\n");
+	strAllNotify +=`\n🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏`
 }
+
+if ($.isNode() && process.env.BEANCHANGE_SUBNOTIFY) {	
+	strSubNotify=process.env.BEANCHANGE_SUBNOTIFY;
+	strSubNotify+="\n";
+	console.log(`检测到预览置顶内容,将在一对一推送的预览显示...\n`);	
+}
+
 
 if (EnableMonth == "true" && Today.getDate() == 1 && Today.getHours() > 17)
 	llShowMonth = false;		// 不查月账单
@@ -204,7 +214,13 @@ if ($.isNode()) {
 			$.allincomeBean = 0; //月收入
 			$.allexpenseBean = 0; //月支出
 			$.joylevel = 0;	
-			$.beanChangeXi=0;		
+			$.beanChangeXi=0;
+			$.inJxBean=0;
+			$.OutJxBean=0;
+			$.todayinJxBean=0;
+			$.todayOutJxBean=0;	
+			$.xibeanCount = 0;
+			$.PigPet = '';
 			TempBaipiao = "";
 			strGuoqi="";
 			console.log(`******开始查询【京东账号${$.index}】${$.nickName || $.UserName}*********`);
@@ -251,18 +267,23 @@ if ($.isNode()) {
 			if (DisableCash == "false") {
 				await jdCash();
 			}
-
+			if(doCheckJxBeans=="true"){
+				await GetJxBeanInfo();
+				await jxbean();
+			}
+			await GetPigPetInfo();
 			await showMsg();
 			if (intPerSent > 0) {
 				if ((i + 1) % intPerSent == 0) {
 					console.log("分段通知条件达成，处理发送通知....");
 					if ($.isNode() && allMessage) {
+						var TempMessage=allMessage;
 						if(strAllNotify)
 							allMessage=strAllNotify+`\n`+allMessage;
 
 						await notify.sendNotify(`${$.name}`, `${allMessage}`, {
 							url: `https://bean.m.jd.com/beanDetail/index.action?resourceValue=bean`
-						})
+						}, '\n\n本通知 By ccwav Mod',TempMessage)
 					}
 					if ($.isNode() && allMessageMonth) {
 						await notify.sendNotify(`京东月资产变动`, `${allMessageMonth}`, {
@@ -325,12 +346,13 @@ if ($.isNode()) {
 		if (allMessage || allMessageMonth) {
 			console.log("分段通知收尾，处理发送通知....");
 			if ($.isNode() && allMessage) {
+				var TempMessage=allMessage;
 				if(strAllNotify)
 					allMessage=strAllNotify+`\n`+allMessage;
 				
 				await notify.sendNotify(`${$.name}`, `${allMessage}`, {
 					url: `https://bean.m.jd.com/beanDetail/index.action?resourceValue=bean`
-				})
+				}, '\n\n本通知 By ccwav Mod',TempMessage)
 			}
 			if ($.isNode() && allMessageMonth) {
 				await notify.sendNotify(`京东月资产变动`, `${allMessageMonth}`, {
@@ -341,36 +363,40 @@ if ($.isNode()) {
 	} else {
 
 		if ($.isNode() && allMessageGp2) {
+			var TempMessage=allMessageGp2;
 			if(strAllNotify)
 				allMessageGp2=strAllNotify+`\n`+allMessageGp2;
 			await notify.sendNotify(`${$.name}#2`, `${allMessageGp2}`, {
 				url: `https://bean.m.jd.com/beanDetail/index.action?resourceValue=bean`
-			})
+			}, '\n\n本通知 By ccwav Mod',TempMessage)
 			await $.wait(10 * 1000);
 		}
 		if ($.isNode() && allMessageGp3) {
+			var TempMessage=allMessageGp3;
 			if(strAllNotify)
 				allMessageGp3=strAllNotify+`\n`+allMessageGp3;
 			await notify.sendNotify(`${$.name}#3`, `${allMessageGp3}`, {
 				url: `https://bean.m.jd.com/beanDetail/index.action?resourceValue=bean`
-			})
+			}, '\n\n本通知 By ccwav Mod',TempMessage)
 			await $.wait(10 * 1000);
 		}
 		if ($.isNode() && allMessageGp4) {
+			var TempMessage=allMessageGp4;
 			if(strAllNotify)
 				allMessageGp4=strAllNotify+`\n`+allMessageGp4;
 			await notify.sendNotify(`${$.name}#4`, `${allMessageGp4}`, {
 				url: `https://bean.m.jd.com/beanDetail/index.action?resourceValue=bean`
-			})
+			}, '\n\n本通知 By ccwav Mod',TempMessage)
 			await $.wait(10 * 1000);
 		}
 		if ($.isNode() && allMessage) {
+			var TempMessage=allMessage;
 			if(strAllNotify)
 				allMessage=strAllNotify+`\n`+allMessage;
 			
 			await notify.sendNotify(`${$.name}`, `${allMessage}`, {
 				url: `https://bean.m.jd.com/beanDetail/index.action?resourceValue=bean`
-			})
+			}, '\n\n本通知 By ccwav Mod',TempMessage)
 			await $.wait(10 * 1000);
 		}
 
@@ -441,7 +467,7 @@ async function showMsg() {
 	//return
 	ReturnMessageTitle="";
 	ReturnMessage = "";
-	
+	var strsummary="";
 	if (MessageUserGp2) {
 		userIndex2 = MessageUserGp2.findIndex((item) => item === $.pt_pin);
 	}
@@ -530,28 +556,51 @@ async function showMsg() {
 	}
 
 	ReturnMessage += `【今日京豆】收${$.todayIncomeBean}豆`;
-
+	strsummary+= `【今日京豆】收${$.todayIncomeBean}豆`;
 	if ($.todayOutcomeBean != 0) {
 		ReturnMessage += `,支${$.todayOutcomeBean}豆`;
+		strsummary += `,支${$.todayOutcomeBean}豆`;
 	}
 	ReturnMessage += `\n`;
-
+	strsummary+= `\n`;
 	ReturnMessage += `【昨日京豆】收${$.incomeBean}豆`;
-
+	
 	if ($.expenseBean != 0) {
-		ReturnMessage += `,支${$.expenseBean}豆`;
+		ReturnMessage += `,支${$.expenseBean}豆`;		
 	}
 	ReturnMessage += `\n`;	
 	
-	if ($.levelName || $.JingXiang){		
-		ReturnMessage += `【当前京豆】${$.beanCount}豆(≈${(($.beanCount-$.beanChangeXi)/ 100).toFixed(2)}元)\n`;		
+	if ($.beanCount){		
+		ReturnMessage += `【当前京豆】${$.beanCount}豆(≈${(($.beanCount-$.beanChangeXi)/ 100).toFixed(2)}元)\n`;
+		strsummary+= `【当前京豆】${$.beanCount}豆(≈${(($.beanCount-$.beanChangeXi)/ 100).toFixed(2)}元)\n`;	
 	} else {
-		ReturnMessage += `【当前京豆】获取失败,接口返回空数据\n`;
+		if($.levelName || $.JingXiang)
+			ReturnMessage += `【当前京豆】获取失败,接口返回空数据\n`;
+		else{
+			ReturnMessage += `【当前京豆】${$.beanCount}豆(≈${(($.beanCount-$.beanChangeXi)/ 100).toFixed(2)}元)\n`;
+			strsummary += `【当前京豆】${$.beanCount}豆(≈${(($.beanCount-$.beanChangeXi)/ 100).toFixed(2)}元)\n`;
+		}			
 	}
+	
+	if (doCheckJxBeans == "true") {
+		ReturnMessage += `【今日喜豆】收${$.todayinJxBean}豆`;		
+		if ($.todayOutJxBean != 0) {
+			ReturnMessage += `,支${$.todayOutJxBean}豆`;			
+		}
+		ReturnMessage += `\n`;		
+		ReturnMessage += `【昨日喜豆】收${$.inJxBean}豆`;		
+		if ($.OutJxBean != 0) {
+			ReturnMessage += `,支${$.OutJxBean}豆`;			
+		}
+		ReturnMessage += `\n`;		
+		ReturnMessage += `【当前喜豆】${$.xibeanCount}喜豆(≈${($.xibeanCount/ 100).toFixed(2)}元)\n`;
+		strsummary += `【当前喜豆】${$.xibeanCount}豆(≈${($.xibeanCount/ 100).toFixed(2)}元)\n`;
+	}
+
 
 	if (typeof $.JDEggcnt !== "undefined") {
 		if ($.JDEggcnt == 0) {
-			ReturnMessage += `【京喜牧场】未开通或提示火爆.\n`;
+			//ReturnMessage += `【京喜牧场】未开通或提示火爆.\n`;
 		} else {
 			ReturnMessage += `【京喜牧场】${$.JDEggcnt}枚鸡蛋\n`;
 		}
@@ -684,6 +733,24 @@ async function showMsg() {
 
 	}
 	
+	if ($.PigPet) {
+		if (userIndex2 != -1) {
+			ReceiveMessageGp2 += `【账号${IndexGp2} ${$.nickName || $.UserName}】${$.PigPet} (金融养猪)\n`;
+		}
+		if (userIndex3 != -1) {
+			ReceiveMessageGp3 += `【账号${IndexGp3} ${$.nickName || $.UserName}】${$.PigPet} (金融养猪)\n`;
+		}
+		if (userIndex4 != -1) {
+			ReceiveMessageGp4 += `【账号${IndexGp4} ${$.nickName || $.UserName}】${$.PigPet} (金融养猪)\n`;
+		}
+		if (userIndex2 == -1 && userIndex3 == -1 && userIndex4 == -1) {
+			allReceiveMessage += `【账号${IndexAll} ${$.nickName || $.UserName}】${$.PigPet} (金融养猪)\n`;
+		}
+
+		TempBaipiao += `【金融养猪】${$.PigPet} 可以兑换了!\n`;
+
+	}
+	
 	llPetError=false;
 	const response = await PetRequest('energyCollect');
 	const initPetTownRes = await PetRequest('initPetTown');
@@ -749,7 +816,7 @@ async function showMsg() {
 	}
 	ReturnMessage += `🧧🧧🧧红包明细🧧🧧🧧\n`;
 	ReturnMessage += `${$.message}`;
-	
+	strsummary +=`${$.message}`;
 	
 	if (userIndex2 != -1) {
 		allMessageGp2 += ReturnMessageTitle+ReturnMessage + `\n`;
@@ -767,16 +834,23 @@ async function showMsg() {
 	console.log(`${ReturnMessageTitle+ReturnMessage}`);
 
 	if ($.isNode() && WP_APP_TOKEN_ONE) {
-		if (TempBaipiao) {
-			TempBaipiao = `【⏰商品白嫖活动提醒⏰】\n` + TempBaipiao;
-			ReturnMessage = TempBaipiao + `\n` + ReturnMessage;
-		}
+		var strTitle="京东资产变动";
 		ReturnMessage=`【账号名称】${$.nickName || $.UserName}\n`+ReturnMessage;
+		
+		if (TempBaipiao) {
+			strsummary=strSubNotify+TempBaipiao +strsummary;			
+			TempBaipiao = `【⏰商品白嫖活动提醒⏰】\n` + TempBaipiao;
+			ReturnMessage = TempBaipiao + `\n` + ReturnMessage;			
+		} else {
+			strsummary = strSubNotify + ReturnMessage;				
+		}
+		
 		ReturnMessage += RemainMessage;
+		
 		if(strAllNotify)
 			ReturnMessage=strAllNotify+`\n`+ReturnMessage;
 		
-		await notify.sendNotifybyWxPucher(`${$.name}`, `${ReturnMessage}`, `${$.UserName}`);
+		await notify.sendNotifybyWxPucher(strTitle, `${ReturnMessage}`, `${$.UserName}`,'\n\n本通知 By ccwav Mod',strsummary);
 	}
 
 	//$.msg($.name, '', ReturnMessage , {"open-url": "https://bean.m.jd.com/beanDetail/index.action?resourceValue=bean"});
@@ -1420,8 +1494,8 @@ function getMs() {
 					console.log(`getMs API请求失败，请检查网路重试`)
 				} else {
 					if (safeGet(data)) {
-						data = JSON.parse(data)
-							if (data.code === 2041 || data.code === 2042) {
+						data = JSON.parse(data);						
+							if (data.result.assignment.assignmentPoints) {
 								$.JdMsScore = data.result.assignment.assignmentPoints || 0
 							}
 					}
@@ -1946,6 +2020,126 @@ function taskPostClientActionUrl(body) {
 		}
 	}
 }
+
+function taskJxUrl(functionId, body = '') {
+    let url = ``;
+    var UA = `jdpingou;iPhone;4.13.0;14.4.2;${randomString(40)};network/wifi;model/iPhone10,2;appBuild/100609;supportApplePay/1;hasUPPay/0;pushNoticeIsOpen/1;hasOCPay/0;supportBestPay/0;session/${Math.random * 98 + 1};pap/JA2019_3111789;brand/apple;supportJDSHWK/1;Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148`;
+
+    if (body) {
+        url = `https://m.jingxi.com/activeapi/${functionId}?${body}`;
+        url += `&_=${Date.now() + 2}&sceneval=2&g_login_type=1&callback=jsonpCBK${String.fromCharCode(Math.floor(Math.random() * 26) + "A".charCodeAt(0))}&g_ty=ls`;
+    } else {
+        url = `https://m.jingxi.com/activeapi/${functionId}?_=${Date.now() + 2}&sceneval=2&g_login_type=1&callback=jsonpCBK${String.fromCharCode(Math.floor(Math.random() * 26) + "A".charCodeAt(0))}&g_ty=ls`;
+    }
+    return {
+        url,
+        headers: {
+            "Host": "m.jingxi.com",
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate, br",
+            "User-Agent": UA,
+            "Accept-Language": "zh-CN,zh-Hans;q=0.9",
+            "Referer": "https://st.jingxi.com/",
+            "Cookie": cookie
+        }
+    }
+}
+
+
+function GetJxBeanDetailData() {
+  return new Promise((resolve) => {
+    $.get(taskJxUrl("queryuserjingdoudetail","pagesize=10&type=16"), async (err, resp, data) => {
+        try {
+          if (err) {
+            console.log(JSON.stringify(err));
+            console.log(`GetJxBeanDetailData请求失败，请检查网路重试`);
+          } else {
+            data = JSON.parse(data.match(new RegExp(/jsonpCBK.?\((.*);*/))[1]);      
+            
+          }
+        } catch (e) {
+          $.logErr(e, resp);
+        } finally {
+          resolve(data);
+        }
+      });
+  });
+}
+function GetJxBeanInfo() {
+  return new Promise((resolve) => {
+    $.get(taskJxUrl("querybeanamount"), async (err, resp, data) => {
+        try {
+          if (err) {
+            console.log(JSON.stringify(err));
+            console.log(`GetJxBeanInfo请求失败，请检查网路重试`);
+          } else {
+            data = JSON.parse(data.match(new RegExp(/jsonpCBK.?\((.*);*/))[1]);      
+            if(data){
+				if(data.errcode==0){
+					$.xibeanCount=data.data.xibean;
+					if(!$.beanCount){
+						$.beanCount=data.data.jingbean;
+					}
+				}
+			}
+          }
+        } catch (e) {
+          $.logErr(e, resp);
+        } finally {
+          resolve(data);
+        }
+      });
+  });
+}
+async function jxbean() {
+    //前一天的0:0:0时间戳
+    const tm = parseInt((Date.now() + 28800000) / 86400000) * 86400000 - 28800000 - (24 * 60 * 60 * 1000);
+    // 今天0:0:0时间戳
+    const tm1 = parseInt((Date.now() + 28800000) / 86400000) * 86400000 - 28800000;
+    var JxYesterdayArr = [],
+    JxTodayArr = [];
+    var JxResponse = await GetJxBeanDetailData();
+    if (JxResponse && JxResponse.ret == "0") {
+        var Jxdetail = JxResponse.detail;
+        if (Jxdetail && Jxdetail.length > 0) {
+            for (let item of Jxdetail) {
+                const date = item.createdate.replace(/-/g, '/') + "+08:00";
+                if (new Date(date).getTime() >= tm1 && (!item['visibleinfo'].includes("退还") && !item['visibleinfo'].includes('扣赠'))) {
+                    JxTodayArr.push(item);
+                } else if (tm <= new Date(date).getTime() && new Date(date).getTime() < tm1 && (!item['visibleinfo'].includes("退还") && !item['visibleinfo'].includes('扣赠'))) {
+                    //昨日的
+                    JxYesterdayArr.push(item);
+                } else if (tm > new Date(date).getTime()) {
+                    break;
+                }
+            }
+        } else {
+            $.errorMsg = `数据异常`;
+            $.msg($.name, ``, `账号${$.index}：${$.nickName}\n${$.errorMsg}`);
+        }
+
+        for (let item of JxYesterdayArr) {
+            if (Number(item.amount) > 0) {
+                $.inJxBean += Number(item.amount);
+            } else if (Number(item.amount) < 0) {
+                $.OutJxBean += Number(item.amount);
+            }
+        }
+        for (let item of JxTodayArr) {
+            if (Number(item.amount) > 0) {
+                $.todayinJxBean += Number(item.amount);
+            } else if (Number(item.amount) < 0) {
+                $.todayOutJxBean += Number(item.amount);
+            }
+        }
+		$.todayOutJxBean = -$.todayOutJxBean;
+		$.OutJxBean = -$.OutJxBean;
+    }
+
+}
+
+
+	
 function randomString(e) {
 	e = e || 32;
 	let t = "0123456789abcdef",
@@ -2136,6 +2330,60 @@ function timeFormat(time) {
 		date = new Date();
 	}
 	return date.getFullYear() + '-' + ((date.getMonth() + 1) >= 10 ? (date.getMonth() + 1) : '0' + (date.getMonth() + 1)) + '-' + (date.getDate() >= 10 ? date.getDate() : '0' + date.getDate());
+}
+
+
+function GetPigPetInfo() {
+    return new Promise(async resolve => {
+        const body = {
+            "shareId": "",
+            "source": 2,
+            "channelLV": "juheye",
+            "riskDeviceParam": "{}",
+        }
+        $.post(taskPetPigUrl('pigPetLogin', body), async(err, resp, data) => {
+            try {
+                if (err) {
+                    console.log(`${JSON.stringify(err)}`)
+                    console.log(`GetPigPetInfo API请求失败，请检查网路重试`)
+                } else {
+                    if (data) {
+                        data = JSON.parse(data);
+                        if (data.resultData.resultData.wished && data.resultData.resultData.wishAward) {
+							$.PigPet=`${data.resultData.resultData.wishAward.name}`                           
+                        }
+                    } else {
+                        console.log(`GetPigPetInfo: 京东服务器返回空数据`)
+                    }
+                }
+            } catch (e) {
+                $.logErr(e, resp)
+            }
+            finally {
+                resolve();
+            }
+        })
+    })
+}
+
+
+function taskPetPigUrl(function_id, body) {
+  return {
+    url: `https://ms.jr.jd.com/gw/generic/uc/h5/m/${function_id}?_=${Date.now()}`,
+    body: `reqData=${encodeURIComponent(JSON.stringify(body))}`,
+    headers: {
+      'Accept': `*/*`,
+      'Origin': `https://u.jr.jd.com`,
+      'Accept-Encoding': `gzip, deflate, br`,
+      'Cookie': cookie,
+      'Content-Type': `application/x-www-form-urlencoded;charset=UTF-8`,
+      'Host': `ms.jr.jd.com`,
+      'Connection': `keep-alive`,
+      'User-Agent': UA,
+      'Referer': `https://u.jr.jd.com/`,
+      'Accept-Language': `zh-cn`
+    }
+  }
 }
 
 function GetDateTime(date) {
