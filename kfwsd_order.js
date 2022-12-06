@@ -96,7 +96,8 @@ let ua = User_Agents[uaNum];
 
                 log("【开始兑换味事达京东卡】");
                 msg += `\n【第${num}个账号兑换结果】`;
-                await exchangeJDcard();
+                await exchangeJDcard(5);
+                await exchangeJDcard(2);
                 await $.wait(2 * 1000);
             }
 
@@ -111,7 +112,15 @@ let ua = User_Agents[uaNum];
  * 卡夫味事达兑换程序
  * 5元京东卡
  */
-function exchangeJDcard(timeout = 2 * 1000) {
+function exchangeJDcard(type, timeout = 2 * 1000) {
+
+    let bodyContent;
+    if (type == 5) {
+        bodyContent = `value=%E4%BA%AC%E4%B8%9CE%E5%8D%A15%E5%85%83&phone=&type=%E8%A7%86%E9%A2%91%E5%8D%A1`
+    } else {
+        bodyContent = `value=%E4%BA%AC%E4%B8%9CE%E5%8D%A12%E5%85%83&phone=&type=%E8%A7%86%E9%A2%91%E5%8D%A1`
+    }
+
     let url = {
         url: `https://kraftheinzcrm.kraftheinz.net.cn/crm/public/index.php/api/v1/exchangeIntegral`,
         headers: {
@@ -122,11 +131,11 @@ function exchangeJDcard(timeout = 2 * 1000) {
             "Referer": "https://kraftheinzcrm.kraftheinz.net.cn/master/"
         },
         //value=京东E卡5元&phone=&type=视频卡
-        body: `value=%E4%BA%AC%E4%B8%9CE%E5%8D%A15%E5%85%83&phone=&type=%E8%A7%86%E9%A2%91%E5%8D%A1`,
+        body: `${bodyContent}`
     };
     return new Promise((resolve) => {
         if (debug) {
-            log(`\n【debug】=============== 这是 兑换5元 请求 url ===============`);
+            log(`\n【debug】=============== 这是 兑换${type}元 请求 url ===============`);
             log(JSON.stringify(url));
         }
 
@@ -140,7 +149,7 @@ function exchangeJDcard(timeout = 2 * 1000) {
                     } else {
                         if (debug) {
                             log(
-                                `\n\n【debug】===============这是 兑换5元 返回data==============`
+                                `\n\n【debug】===============这是 兑换${type}元 返回data==============`
                             );
                             log(data);
                         }
@@ -148,10 +157,10 @@ function exchangeJDcard(timeout = 2 * 1000) {
                         let result = JSON.parse(data);
                         if (result.error_code == 0) {
                             Notify = 1;//兑换成功,打开通知
-                            log(`兑换5元成功：${result.data}`);
+                            log(`兑换${type}元成功：${result.data}`);
                             msg += `\n${result.data}`;
                         } else {
-                            log(`兑换5元失败，原因是：${result.msg}`);
+                            log(`兑换${type}元失败，原因是：${result.msg}`);
                         }
                         msg += `\n${result.msg}`;
                     }
