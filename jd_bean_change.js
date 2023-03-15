@@ -2076,8 +2076,8 @@ async function getjdfruit() {
 								$.JdtreeTotalEnergy = $.farmInfo.farmUserPro.treeTotalEnergy;
 								$.treeState = $.farmInfo.treeState;
 								let waterEveryDayT = $.JDwaterEveryDayT;
-								let waterTotalT = ($.farmInfo.farmUserPro.treeTotalEnergy - $.farmInfo.farmUserPro.treeEnergy - $.farmInfo.farmUserPro.totalEnergy) / 10; //一共还需浇多少次水
-								let waterD = Math.ceil(waterTotalT / waterEveryDayT);
+								let waterTotalT = ($.farmInfo.farmUserPro.treeTotalEnergy - $.farmInfo.farmUserPro.treeEnergy) / 10; //一共还需浇多少次水
+                                let waterD = Math.ceil(waterTotalT / waterEveryDayT);
 
 								$.JdwaterTotalT = waterTotalT;
 								$.JdwaterD = waterD;
