@@ -83,7 +83,7 @@ async function sign(cookie){
                     "headers": {
                         "Content-Type": "application/json;charset=UTF-8",
                         "Accept": "application/json, text/plain, */*",
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36 Edg/106.0.1370.52",
+                        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
                         "Cookie": cookie,
 
                     },
@@ -95,7 +95,7 @@ async function sign(cookie){
                     let data =JSON.parse(body);
                     console.log("账号"+index+"("+data.code+")"+data.message+"\n")
                     msg += "账号"+index+"("+data.code+")"+data.message+"\n";
-					if(data.list.length > 0)
+					if(data.list)
 					{
 						msg += "Left days: " + data.list[0].balance + "\n";
 					}
