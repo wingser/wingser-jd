@@ -95,6 +95,11 @@ async function sign(cookie){
                     let data =JSON.parse(body);
                     console.log("账号"+index+"("+data.code+")"+data.message+"\n")
                     msg += "账号"+index+"("+data.code+")"+data.message+"\n";
+					if(data.list.length > 0)
+					{
+						msg += "Left days: " + data.list[0].balance + "\n";
+					}
+
                     // switch (data.code){
                     //     case 0:
                     //
