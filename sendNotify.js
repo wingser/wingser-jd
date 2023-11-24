@@ -269,16 +269,7 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
             }
         }
 
-        if (text.indexOf("cookie已失效") != -1 || text.indexOf("登录") != -1 || desp.indexOf("重新登录获取") != -1 || text == "Ninja 运行通知") {
-
-            if (Notify_CKTask) {
-                console.log("触发CK脚本，开始执行....");
-                Notify_CKTask = "task " + Notify_CKTask + " now";
-                await exec(Notify_CKTask, function (error, stdout, stderr) {
-                    console.log(error, stdout, stderr)
-                });
-            }
-        }
+        //先自动检测ck,并禁用.需要配置文件配置 NOTIFY_AUTOCHECKCK="true"
         if (process.env.NOTIFY_AUTOCHECKCK == "true") {
             if (text.indexOf("cookie已失效") != -1 || desp.indexOf("重新登录获取") != -1) {
                 console.log(`捕获CK过期通知，开始尝试处理...`);
@@ -402,6 +393,29 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
                 }
                 if (llHaderror)
                     return;
+            }
+        }
+
+        //再通过ckck禁用,然后通过wsk复活.
+        if (text.indexOf("cookie已失效") != -1 || text.indexOf("登录") != -1 || desp.indexOf("重新登录获取") != -1 || text == "Ninja 运行通知") {
+
+            if (Notify_CKTask) {
+
+				console.log("触发CK脚本，如果配置禁用ck脚本,先禁用失效ck....");
+				if (process.env.NOTIFY_CKDOWN) {
+					var ntf_ckdown = "task " + process.env.NOTIFY_CKDOWN + " now";
+					await exec(ntf_ckdown, function (error, stdout, stderr) {
+						console.log(error, stdout, stderr)
+					});
+				}
+
+                setTimeout(() => {console.log("30秒后执行");}, 30000);
+
+                console.log("触发CK脚本，开始执行wsk更新ck....");
+                Notify_CKTask = "task " + Notify_CKTask + " now";
+                await exec(Notify_CKTask, function (error, stdout, stderr) {
+                    console.log(error, stdout, stderr)
+                });
             }
         }
 
