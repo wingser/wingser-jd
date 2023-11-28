@@ -270,6 +270,8 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
         }
 
         //先自动检测ck,并禁用.需要配置文件配置 NOTIFY_AUTOCHECKCK="true"
+		//并获取禁用序号tempid
+		var tempid = 0;
         if (process.env.NOTIFY_AUTOCHECKCK == "true") {
             if (text.indexOf("cookie已失效") != -1 || desp.indexOf("重新登录获取") != -1) {
                 console.log(`捕获CK过期通知，开始尝试处理...`);
@@ -284,7 +286,7 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
                             isLogin = true;
                             await isLoginByX1a0He(temptest.value);
                             if (!isLogin) {
-                                var tempid = 0;
+                                //var tempid = 0;
                                 if (temptest._id) {
                                     tempid = temptest._id;
                                 }
@@ -400,7 +402,7 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
         if (text.indexOf("cookie已失效") != -1 || text.indexOf("登录") != -1 || desp.indexOf("重新登录获取") != -1 || text == "Ninja 运行通知") {
 
             if (Notify_CKTask) {
-
+				/** 上面禁用方法比较好用,不调用ckck禁用失效链接.
 				console.log("触发CK脚本，如果配置禁用ck脚本,先禁用失效ck....");
 				if (process.env.NOTIFY_CKDOWN) {
 					var ntf_ckdown = "task " + process.env.NOTIFY_CKDOWN + " now";
@@ -408,11 +410,27 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 						console.log(error, stdout, stderr)
 					});
 				}
+				
+				*/
 
-                setTimeout(() => {console.log("30秒后执行");}, 30000);
+                setTimeout(() => {console.log("15秒后执行");}, 15000);
 
                 console.log("触发CK脚本，开始执行wsk更新ck....");
-                Notify_CKTask = "task " + Notify_CKTask + " now";
+				if(tempid)
+				{
+					/*
+					 * task shufflewzc_faker2_main/jd_wskey.py desi JD_WSCK 10
+					 * 因为我有10个账号,所以取余,和账号位置\编排方式有关.懒得写通用的配置.
+					 * 我是前10个wsk,后面同序列10个pt_pin.所以刚好可以取余.
+					 */
+					Notify_CKTask = "task " + Notify_CKTask + " desi JD_WSCK " + tempid%10;
+				}
+				else
+				{
+					Notify_CKTask = "task " + Notify_CKTask + " now";
+				}
+				console.log(`执行内容::::${Notify_CKTask}`);
+                
                 await exec(Notify_CKTask, function (error, stdout, stderr) {
                     console.log(error, stdout, stderr)
                 });
