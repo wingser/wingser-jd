@@ -421,9 +421,9 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 					/*
 					 * task shufflewzc_faker2_main/jd_wskey.py desi JD_WSCK 10
 					 * 因为我有10个账号,所以取余,和账号位置\编排方式有关.懒得写通用的配置.
-					 * 我是前10个wsk,后面同序列10个pt_pin.所以刚好可以取余.
+					 * 我是前10个wsk,后面同序列10个pt_pin.改为减法,取余第二十个整除有问题.
 					 */
-					Notify_CKTask = "task " + Notify_CKTask + " desi JD_WSCK " + tempid%10;
+					Notify_CKTask = "task " + Notify_CKTask + " desi JD_WSCK " + (tempid-10);
 				}
 				else
 				{
