@@ -418,12 +418,16 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
                 console.log("触发CK脚本，开始执行wsk更新ck....");
 				if(tempid)
 				{
-					/*
-					 * task shufflewzc_faker2_main/jd_wskey.py desi JD_WSCK 10
-					 * 因为我有10个账号,所以取余,和账号位置\编排方式有关.懒得写通用的配置.
-					 * 我是前10个wsk,后面同序列10个pt_pin.改为减法,取余第二十个整除有问题.
-					 */
-					Notify_CKTask = "task " + Notify_CKTask + " desi JD_WSCK " + (tempid-10);
+					//禁用的ck是超过2倍wsk的,所以是没有wsk的,不需要执行转换wsk
+					if (tempid < 10*2)
+					{
+						/*
+						 * task shufflewzc_faker2_main/jd_wskey.py desi JD_WSCK 10
+						 * 因为我有10个账号,所以取余,和账号位置\编排方式有关.懒得写通用的配置.
+						 * 我是前10个wsk,后面同序列10个pt_pin.改为减法,取余第二十个整除有问题.
+						 */
+						Notify_CKTask = "task " + Notify_CKTask + " desi JD_WSCK " + (tempid-10);
+					}
 				}
 				else
 				{
